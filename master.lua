@@ -12,7 +12,7 @@ Config = {
 
 Logger = require("logger")
 CurrentFloor = 1
-Direction = 0
+ElevatorDirection = 0
 
 ---Broadcasts to floor computers.
 ---@param message any The data to send.
@@ -30,7 +30,7 @@ while true do
 	if protocol == "EV_DATA_REQ" then
 		--Request to send EV data to the target floor computer.
 		Logger:info("Sending EV data to #"..sender..".")
-		rednet.send(sender, {currentFloor = CurrentFloor, direction = Direction, minFloor = Config.minFloor, maxFloor = Config.maxFloor}, "EV_DATA_RES")
+		rednet.send(sender, {currentFloor = CurrentFloor, direction = ElevatorDirection, minFloor = Config.minFloor, maxFloor = Config.maxFloor}, "EV_DATA_RES")
 	elseif protocol == "EV_CALL" then
 		--Call elevator to target floor.
 		Logger:info("The elevator called to floor "..message..".")

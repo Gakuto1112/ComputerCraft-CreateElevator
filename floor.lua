@@ -6,19 +6,20 @@ Config = {
 
 Logger = require("logger")
 FloorRange = {0, 0} --Floor range: 1. minimum floor, 2. maximum floor
-IsElevatorMoving = false --Whatever the elevator is moving or not.
+ElevatorDirection = 0 --Direction of the elevator: 1. up, 0. stopped, -1. down
+IsDirectionIndicated = false --Whatever the direction indicators are displayed or not.
 
 ---Resets floor input screen.
 function resetFloorInputScreen()
 	term.clear()
 	term.setCursorPos(1, 1)
-	if IsElevatorMoving then
-		print("The elevator is moving. Please wait.")
-	else
+	if ElevatorDirection == 0 then
 		print("Enter the floor which you want to go ("..FloorRange[1].."-"..FloorRange[2]..").")
 		write("> ")
+	else
+		print("The elevator is moving. Please wait.")
 	end
-	term.setCursorBlink(not IsElevatorMoving)
+	term.setCursorBlink(ElevatorDirection == 0)
 end
 
 ---Draws centered text in line.
@@ -32,28 +33,29 @@ end
 
 ---Draws direction arrow.
 ---@param direction number Arrow direction: 1: up, 0: none (the elevator is stopping), -1: down
-function drawArrow(direction)
+function drawArrow()
 	for _, cursorPos in ipairs({{3, 1}, {3, 3}}) do
 		Monitor.setCursorPos(cursorPos[1], cursorPos[2])
 		Monitor.write(" ")
 	end
 	local isColor = Monitor.isColor()
-	if direction == 1 then
+	if ElevatorDirection == 1 then
 		if isColor then
 			Monitor.setTextColor(colors.lime)
 		end
 		Monitor.setCursorPos(3, 1)
 		Monitor.write("=")
-	elseif direction == -1 then
+	elseif ElevatorDirection == -1 then
 		if isColor then
 			Monitor.setTextColor(colors.red)
 		end
 		Monitor.setCursorPos(3, 3)
 		Monitor.write("=")
 	end
-	if direction ~= 0 and isColor then
+	if ElevatorDirection ~= 0 and isColor then
 		Monitor.setTextColor(colors.white)
 	end
+	IsDirectionIndicated = true
 end
 
 --Setup
@@ -66,7 +68,7 @@ Monitor.write("?")
 peripheral.find("modem", rednet.open)
 rednet.host("EV_SYSTEM_FLOOR", "floor_"..Config.floor)
 
---Search for master computer
+--Search for master computerElevatorDirection
 MasterID = nil
 repeat
 	local id = rednet.lookup("EV_SYSTEM_MASTER")
@@ -89,7 +91,7 @@ while true do
 	if protocol == "EV_DATA_RES" then
 		Logger:info("Got EV data from master.")
 		drawFloorNumber(tostring(message.currentFloor))
-		drawArrow(message.direction)
+		drawArrow()
 		FloorRange = {message.minFloor, message.maxFloor}
 		resetFloorInputScreen()
 		break
@@ -100,11 +102,23 @@ end
 ParallelData = nil
 
 function floorInput()
-	if not IsElevatorMoving then
+	if ElevatorDirection == 0 then
 		ParallelData = tonumber(read())
 	else
 		while true do
-			sleep(1)
+			sleep(0.5)
+			if ElevatorDirection <= 1 then
+				Monitor.setCursorPos(3, ElevatorDirection == 1 and 1 or 3)
+				local isColor = Monitor.isColor()
+				if isColor then
+					Monitor.setTextColor(ElevatorDirection == 1 and colors.lime or colors.red)
+				end
+				Monitor.write(IsDirectionIndicated and " " or "=")
+				if isColor then
+					Monitor.setTextColor(colors.white)
+				end
+				IsDirectionIndicated = not IsDirectionIndicated
+			end
 		end
 	end
 end
@@ -124,7 +138,7 @@ while true do
 	if functionNumber == 1 then
 		if ParallelData and ParallelData % 1 == 0 and ParallelData >= FloorRange[1] and ParallelData <= FloorRange[2] then
 			rednet.send(MasterID, ParallelData, "EV_CALL")
-			IsElevatorMoving = true
+			ElevatorDirection = 2
 		else
 			local isColor = term.isColor()
 			if isColor then
@@ -139,16 +153,19 @@ while true do
 	elseif functionNumber == 2 then
 		if ParallelData[1] == "rednet_message" then
 			if ParallelData[4] == "EV_DIRECTION" then
-				IsElevatorMoving = true
-				drawArrow(ParallelData[3])
+				ElevatorDirection = ParallelData[3]
+				drawArrow()
 				resetFloorInputScreen()
 			elseif ParallelData[4] == "EV_FLOOR" then
-				IsElevatorMoving = false
-				drawArrow(0)
-				resetFloorInputScreen()
+				drawFloorNumber(tostring(ParallelData[3].floor))
+				if ParallelData[3].isArrived then
+					ElevatorDirection = 0
+					drawArrow()
+					resetFloorInputScreen()
+				end
 			end
 		elseif ParallelData[1] == "redstone" then
-			if redstone.getInput(Config.buttonFace) and not IsElevatorMoving then
+			if redstone.getInput(Config.buttonFace) and ElevatorDirection == 0 then
 				rednet.send(MasterID, Config.floor, "EV_CALL")
 			end
 		end
