@@ -95,36 +95,42 @@ while true do
 end
 
 --Parallel functions
+ParallelData = nil
+
 function floorInput()
+	write("> ")
+	ParallelData = tonumber(read())
+end
+
+function eventStandby()
 	while true do
-		write("> ")
-		local floor = tonumber(read())
-		if floor and floor % 1 == 0 and floor >= FloorRange[1] and floor <= FloorRange[2] then
-			term.setCursorBlink(false)
-			rednet.send(MasterID, floor, "EV_CALL")
+		local event, arg1, arg2, arg3 = os.pullEvent()
+		if event == "rednet_message" or event == "redstone" then
+			ParallelData = {event, arg1, arg2, arg3}
+			return
+		end
+	end
+end
+
+while true do
+	local functionNumber = parallel.waitForAny(floorInput, eventStandby)
+	if functionNumber == 1 then
+		if ParallelData and ParallelData % 1 == 0 and ParallelData >= FloorRange[1] and ParallelData <= FloorRange[2] then
+			rednet.send(MasterID, ParallelData, "EV_CALL")
 		else
 			local isColor = term.isColor()
 			if isColor then
 				term.setTextColor(colors.red)
 			end
-			print("Invalid input.")
+			print("Invalid input. Reason: not number, not integer, or out of range")
 			if isColor then
 				term.setTextColor(colors.white)
 			end
 		end
-	end
-end
-
-function event()
-	while true do
-		local event, arg1, arg2, arg3 = os.pullEvent()
-		if event == "rednet_message" then --arg1: sender, arg2: message, arg3: protocol
-		elseif event == "redstone" then
-			if redstone.getInput(Config.buttonFace) then
-				rednet.send(MasterID, Config.floor, "EV_CALL")
-			end
+	else
+		if ParallelData[1] == "rednet_message" then
+		elseif redstone.getInput(Config.buttonFace) then
+			rednet.send(MasterID, Config.floor, "EV_CALL")
 		end
 	end
 end
-
-parallel.waitForAny(floorInput, event)
