@@ -7,6 +7,12 @@ Logger = require("logger")
 
 --Setup
 Logger:info("This floor is "..Config.floor..".")
+Monitor = peripheral.find("monitor")
+Monitor.clear()
+Monitor.setTextScale(1.5)
+print(Monitor.getSize())
+Monitor.setCursorPos(3, 2)
+Monitor.write("?")
 peripheral.find("modem", rednet.open)
 rednet.host("EV_SYSTEM_FLOOR", "floor_"..Config.floor)
 
