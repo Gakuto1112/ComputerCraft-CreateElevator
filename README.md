@@ -16,8 +16,6 @@ Createで作成した、からくりエレベーターを制御するComputerCra
 | - | - | - |
 | floor | number | 到着・通過したフロア |
 | isArrived | boolean | 到着なら`true`、通過なら`false` |
-| minFloor | number | 最下階の階 |
-| maxFloor | number | 最上階の階 |
 
 ### 通信プロトコル
 | プロトコル名 | 説明 | データ |
