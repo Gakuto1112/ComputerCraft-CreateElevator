@@ -3,6 +3,7 @@
 ---| "EV_DATA_RES"
 ---| "EV_CALL"
 ---| "EV_DIRECTION"
+---| "EV_FLOOR"
 
 --Program configurations
 Config = {
@@ -13,6 +14,12 @@ Config = {
 Logger = require("logger")
 CurrentFloor = 1
 ElevatorDirection = 0
+
+---Gets EV data.
+---@return table EVData EV data.
+function getEVData()
+	return {currentFloor = CurrentFloor, direction = ElevatorDirection, minFloor = Config.minFloor, maxFloor = Config.maxFloor}
+end
 
 ---Broadcasts to floor computers.
 ---@param message any The data to send.
@@ -25,12 +32,14 @@ end
 
 peripheral.find("modem", rednet.open)
 rednet.host("EV_SYSTEM_MASTER", "master")
+Logger:info("Broadcasting EV data to floor computers.")
+broadcast(getEVData(), "EV_DATA_RES")
 while true do
 	local event, sender, message, protocol = os.pullEvent("rednet_message")
 	if protocol == "EV_DATA_REQ" then
 		--Request to send EV data to the target floor computer.
 		Logger:info("Sending EV data to #"..sender..".")
-		rednet.send(sender, {currentFloor = CurrentFloor, direction = ElevatorDirection, minFloor = Config.minFloor, maxFloor = Config.maxFloor}, "EV_DATA_RES")
+		rednet.send(sender, getEVData(), "EV_DATA_RES")
 	elseif protocol == "EV_CALL" then
 		--Call elevator to target floor.
 		Logger:info("The elevator called to floor "..message..".")
