@@ -16,7 +16,9 @@ function resetFloorInputScreen()
 		print("The elevator is moving. Please wait.")
 	else
 		print("Enter the floor which you want to go ("..FloorRange[1].."-"..FloorRange[2]..").")
+		write("> ")
 	end
+	term.setCursorBlink(not IsElevatorMoving)
 end
 
 ---Draws centered text in line.
@@ -98,8 +100,13 @@ end
 ParallelData = nil
 
 function floorInput()
-	write("> ")
-	ParallelData = tonumber(read())
+	if not IsElevatorMoving then
+		ParallelData = tonumber(read())
+	else
+		while true do
+			sleep(1)
+		end
+	end
 end
 
 function eventStandby()
@@ -117,6 +124,7 @@ while true do
 	if functionNumber == 1 then
 		if ParallelData and ParallelData % 1 == 0 and ParallelData >= FloorRange[1] and ParallelData <= FloorRange[2] then
 			rednet.send(MasterID, ParallelData, "EV_CALL")
+			IsElevatorMoving = true
 		else
 			local isColor = term.isColor()
 			if isColor then
@@ -126,11 +134,23 @@ while true do
 			if isColor then
 				term.setTextColor(colors.white)
 			end
+			write("> ")
 		end
-	else
+	elseif functionNumber == 2 then
 		if ParallelData[1] == "rednet_message" then
-		elseif redstone.getInput(Config.buttonFace) then
-			rednet.send(MasterID, Config.floor, "EV_CALL")
+			if ParallelData[4] == "EV_DIRECTION" then
+				IsElevatorMoving = true
+				drawArrow(ParallelData[3])
+				resetFloorInputScreen()
+			elseif ParallelData[4] == "EV_FLOOR" then
+				IsElevatorMoving = false
+				drawArrow(0)
+				resetFloorInputScreen()
+			end
+		elseif ParallelData[1] == "redstone" then
+			if redstone.getInput(Config.buttonFace) and not IsElevatorMoving then
+				rednet.send(MasterID, Config.floor, "EV_CALL")
+			end
 		end
 	end
 end
