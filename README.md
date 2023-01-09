@@ -8,6 +8,8 @@ Createで作成した、からくりエレベーターを制御するComputerCra
 | - | - | - |
 | currentFloor | number | 現在エレベーターがいる階層 |
 | direction | number | 1 = 上昇中, 0 = 停止中, -1 = 下降中 |
+| minFloor | number | 最下階の階 |
+| maxFloor | number | 最上階の階 |
 
 ### 通信プロトコル
 | プロトコル名 | 説明 | データ |
@@ -15,4 +17,3 @@ Createで作成した、からくりエレベーターを制御するComputerCra
 | EV_DATA_REQ | 子機が親機にエレベーターの情報を要求する。 | |
 | EV_DATA_RES | 親機が子機にエレベーターの情報を送信する。 | エレベーター情報 |
 | EV_CALL | エレベーターを特定の階に呼び出す。 | 呼び出す階 |
-| EV_CALL_INVALID | 呼び出そうとした階が存在しない場合に送信される。 |  |

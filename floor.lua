@@ -5,6 +5,7 @@ Config = {
 }
 
 Logger = require("logger")
+FloorRange = {0, 0} --Floor range: 1. minimum floor, 2. maximum floor
 IsElevatorMoving = false --Whatever the elevator is moving or not.
 
 ---Resets floor input screen.
@@ -14,7 +15,7 @@ function resetFloorInputScreen()
 	if IsElevatorMoving then
 		print("The elevator is moving. Please wait.")
 	else
-		print("Enter the floor which you want to go.")
+		print("Enter the floor which you want to go ("..FloorRange[1].."-"..FloorRange[2]..").")
 	end
 end
 
@@ -87,6 +88,7 @@ while true do
 		Logger:info("Got EV data from master.")
 		drawFloorNumber(tostring(message.currentFloor))
 		drawArrow(message.direction)
+		FloorRange = {message.minFloor, message.maxFloor}
 		resetFloorInputScreen()
 		break
 	end
@@ -97,20 +99,9 @@ function floorInput()
 	while true do
 		write("> ")
 		local floor = tonumber(read())
-		if floor and floor % 1 == 0 then
+		if floor and floor % 1 == 0 and floor >= FloorRange[1] and floor <= FloorRange[2] then
 			term.setCursorBlink(false)
 			rednet.send(MasterID, floor, "EV_CALL")
-			local event, sender, message, protocol = os.pullEvent("rednet_message")
-			if protocol == "EV_CALL_INVALID" then
-				local isColor = term.isColor()
-				if isColor then
-					term.setTextColor(colors.red)
-				end
-				print("This floor does not exist.")
-				if isColor then
-					term.setTextColor(colors.white)
-				end
-			end
 		else
 			local isColor = term.isColor()
 			if isColor then
