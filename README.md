@@ -1,5 +1,5 @@
 # ComputerCraft-CreateElevator
-Createで作成したからくりエレベーターを制御するComputerCraft用のプログラムです。
+Createで作成した、からくりエレベーターを制御するComputerCraft用のプログラムです。
 
 ## 技術情報
 ### データ構造
@@ -15,3 +15,4 @@ Createで作成したからくりエレベーターを制御するComputerCraft�
 | EV_DATA_REQ | 子機が親機にエレベーターの情報を要求する。 | |
 | EV_DATA_RES | 親機が子機にエレベーターの情報を送信する。 | エレベーター情報 |
 | EV_CALL | エレベーターを特定の階に呼び出す。 | 呼び出す階 |
+| EV_CALL_INVALID | 呼び出そうとした階が存在しない場合に送信される。 |  |

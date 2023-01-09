@@ -4,6 +4,20 @@ Config = {
 	floor = 1 --The floor of this floor computer.
 }
 
+Logger = require("logger")
+IsElevatorMoving = false --Whatever the elevator is moving or not.
+
+---Resets floor input screen.
+function resetFloorInputScreen()
+	term.clear()
+	term.setCursorPos(1, 1)
+	if IsElevatorMoving then
+		print("The elevator is moving. Please wait.")
+	else
+		print("Enter the floor which you want to go.")
+	end
+end
+
 ---Draws centered text in line.
 ---@param text string A string to print.
 function drawFloorNumber(text)
@@ -39,8 +53,6 @@ function drawArrow(direction)
 	end
 end
 
-Logger = require("logger")
-
 --Setup
 Logger:info("This floor is "..Config.floor..".")
 Monitor = peripheral.find("monitor")
@@ -68,19 +80,60 @@ until MasterID
 Logger:info("Sending EV data request to master.")
 rednet.send(MasterID, "", "EV_DATA_REQ")
 
---Event
+--Initial event
 while true do
-	local event, arg1, arg2, arg3 = os.pullEvent()
-	if event == "rednet_message" then --arg1: sender, arg2: message, arg3: protocol
-		if arg3 == "EV_DATA_RES" then
-			Logger:info("Got EV data from master.")
-			drawFloorNumber(tostring(arg2.currentFloor))
-			drawArrow(arg2.direction)
-		end
-	elseif event == "redstone" then
-		if redstone.getInput(Config.buttonFace) then
-			Logger:info("Calling the elevator to floor "..Config.floor..".")
-			rednet.send(MasterID, Config.floor, "EV_CALL")
+	local event, sender, message, protocol = os.pullEvent("rednet_message")
+	if protocol == "EV_DATA_RES" then
+		Logger:info("Got EV data from master.")
+		drawFloorNumber(tostring(message.currentFloor))
+		drawArrow(message.direction)
+		resetFloorInputScreen()
+		break
+	end
+end
+
+--Parallel functions
+function floorInput()
+	while true do
+		write("> ")
+		local floor = tonumber(read())
+		if floor and floor % 1 == 0 then
+			term.setCursorBlink(false)
+			rednet.send(MasterID, floor, "EV_CALL")
+			local event, sender, message, protocol = os.pullEvent("rednet_message")
+			if protocol == "EV_CALL_INVALID" then
+				local isColor = term.isColor()
+				if isColor then
+					term.setTextColor(colors.red)
+				end
+				print("This floor does not exist.")
+				if isColor then
+					term.setTextColor(colors.white)
+				end
+			end
+		else
+			local isColor = term.isColor()
+			if isColor then
+				term.setTextColor(colors.red)
+			end
+			print("Invalid input.")
+			if isColor then
+				term.setTextColor(colors.white)
+			end
 		end
 	end
 end
+
+function event()
+	while true do
+		local event, arg1, arg2, arg3 = os.pullEvent()
+		if event == "rednet_message" then --arg1: sender, arg2: message, arg3: protocol
+		elseif event == "redstone" then
+			if redstone.getInput(Config.buttonFace) then
+				rednet.send(MasterID, Config.floor, "EV_CALL")
+			end
+		end
+	end
+end
+
+parallel.waitForAny(floorInput, event)
