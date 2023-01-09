@@ -1,19 +1,20 @@
 --Program configurations
 Config = {
+	buttonFace = "back", --The face with elevator call button.
 	floor = 1 --The floor of this floor computer.
 }
 
 ---Draws centered text in line.
 ---@param text string A string to print.
 function drawFloorNumber(text)
-	Monitor.setCursorPos(1, 3)
+	Monitor.setCursorPos(1, 2)
 	Monitor.write("     ")
-	Monitor.setCursorPos(3 - math.floor(#text), 3)
+	Monitor.setCursorPos(3 - math.floor(#text / 2), 2)
 	Monitor.write(text)
 end
 
 ---Draws direction arrow.
----@param direction number Arrow direction: 1: up, 0: none (the elevetor is stopping), -1: down
+---@param direction number Arrow direction: 1: up, 0: none (the elevator is stopping), -1: down
 function drawArrow(direction)
 	for _, cursorPos in ipairs({{3, 1}, {3, 3}}) do
 		Monitor.setCursorPos(cursorPos[1], cursorPos[2])
@@ -69,10 +70,17 @@ rednet.send(MasterID, "", "EV_DATA_REQ")
 
 --Event
 while true do
-	local event, sender, message, protocol = os.pullEvent("rednet_message")
-	if protocol == "EV_DATA_RES" then
-		Logger:info("Got EV data from master.")
-		drawFloorNumber(tostring(message.currentFloor))
-		drawArrow(message.direction)
+	local event, arg1, arg2, arg3 = os.pullEvent()
+	if event == "rednet_message" then --arg1: sender, arg2: message, arg3: protocol
+		if arg3 == "EV_DATA_RES" then
+			Logger:info("Got EV data from master.")
+			drawFloorNumber(tostring(arg2.currentFloor))
+			drawArrow(arg2.direction)
+		end
+	elseif event == "redstone" then
+		if redstone.getInput(Config.buttonFace) then
+			Logger:info("Calling the elevator to floor "..Config.floor..".")
+			rednet.send(MasterID, Config.floor, "EV_CALL")
+		end
 	end
 end
