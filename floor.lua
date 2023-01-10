@@ -9,7 +9,6 @@ Config = {
 Logger = require("logger")
 FloorRange = {0, 0} --Floor range: 1. minimum floor, 2. maximum floor
 ElevatorDirection = 0 --Direction of the elevator: 1. up, 0. stopped, -1. down
-IsDirectionIndicated = false --Whatever the direction indicators are displayed or not.
 
 ---Resets floor input screen.
 function resetFloorInputScreen()
@@ -56,7 +55,6 @@ function drawArrow()
 	if ElevatorDirection ~= 0 and isColor then
 		Monitor.setTextColor(colors.white)
 	end
-	IsDirectionIndicated = true
 end
 
 --Setup
@@ -109,19 +107,7 @@ function floorInput()
 		ParallelData = tonumber(read())
 	else
 		while true do
-			sleep(0.5)
-			if ElevatorDirection <= 1 then
-				Monitor.setCursorPos(3, ElevatorDirection == 1 and 1 or 3)
-				local isColor = Monitor.isColor()
-				if isColor then
-					Monitor.setTextColor(ElevatorDirection == 1 and colors.lime or colors.red)
-				end
-				Monitor.write(IsDirectionIndicated and " " or "=")
-				if isColor then
-					Monitor.setTextColor(colors.white)
-				end
-				IsDirectionIndicated = not IsDirectionIndicated
-			end
+			sleep(5)
 		end
 	end
 end
@@ -141,7 +127,6 @@ while true do
 	if functionNumber == 1 then
 		if ParallelData and ParallelData % 1 == 0 and ParallelData >= FloorRange[1] and ParallelData <= FloorRange[2] then
 			rednet.send(MasterID, ParallelData, "EV_CALL")
-			ElevatorDirection = 2
 		else
 			local isColor = term.isColor()
 			if isColor then
