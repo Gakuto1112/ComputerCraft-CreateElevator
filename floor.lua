@@ -2,7 +2,8 @@
 Config = {
 	buttonFace = "back", --The face with elevator call button.
 	doorFace = "left", --The face to open and close door with redstone.
-	floor = 1 --The floor of this floor computer.
+	floor = 1, --The floor of this floor computer.
+	roofFloor = true --Whatever the top floor shows as roof top (R) or not.
 }
 
 Logger = require("logger")
@@ -92,7 +93,7 @@ while true do
 	if protocol == "EV_DATA_RES" then
 		Logger:info("Got EV data from master.")
 		redstone.setOutput(Config.doorFace, message.currentFloor == Config.floor)
-		drawFloorNumber(tostring(message.currentFloor))
+		drawFloorNumber((message.currentFloor == message.maxFloor and Config.roofFloor) and "R" or tostring(message.currentFloor))
 		drawArrow()
 		FloorRange = {message.minFloor, message.maxFloor}
 		resetFloorInputScreen()
@@ -160,7 +161,7 @@ while true do
 				drawArrow()
 				resetFloorInputScreen()
 			elseif ParallelData[4] == "EV_FLOOR" then
-				drawFloorNumber(tostring(ParallelData[3].floor))
+				drawFloorNumber((ParallelData[3] == FloorRange[2] and Config.roofFloor) and "R" or tostring(ParallelData[3]))
 				if ParallelData[3].isArrived then
 					if ParallelData[3].floor == Config.floor then
 						redstone.setOutput(Config.doorFace, true)
