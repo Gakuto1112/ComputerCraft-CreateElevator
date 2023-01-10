@@ -38,6 +38,11 @@ function elevatorMove(targetFloor)
 		ElevatorDirection = 0
 		redstone.setOutput(Config.clutchFace, false)
 		redstone.setOutput(Config.gearShiftFace, false)
+
+		--Save current floor.
+		local file = fs.open(FilePath, "w")
+		file.write(CurrentFloor)
+		file.close()
 	end
 
 	local function rednetStandby()
@@ -63,6 +68,25 @@ function broadcast(message, protocol)
 	end
 end
 
+--Read elevator position data.
+FilePath = "./elevator_position.txt"
+if fs.exists(FilePath) then
+	local file = fs.open(FilePath, "r")
+	local data = file.readAll()
+	if data then
+		local floor = tonumber(data)
+		if floor then
+			CurrentFloor = floor
+		else
+			Logger:warn("Cannot read current floor. Use default value (1).")
+		end
+		file.close()
+	else
+		Logger:warn("Cannot read current floor. Use default value (1).")
+	end
+end
+
+--Communication setup
 peripheral.find("modem", rednet.open)
 rednet.host("EV_SYSTEM_MASTER", "master")
 Logger:info("Broadcasting EV data to floor computers.")
