@@ -32,7 +32,6 @@ function drawFloorNumber(text)
 end
 
 ---Draws direction arrow.
----@param direction number Arrow direction: 1: up, 0: none (the elevator is stopping), -1: down
 function drawArrow()
 	for _, cursorPos in ipairs({{3, 1}, {3, 3}}) do
 		Monitor.setCursorPos(cursorPos[1], cursorPos[2])

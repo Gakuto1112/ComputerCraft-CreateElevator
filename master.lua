@@ -7,8 +7,11 @@
 
 --Program configurations
 Config = {
-	minFloor = 1,
-	maxFloor = 10
+	clutchFace = "left", --The face to control the clutch with redstone.
+	gearShiftFace = "right", --The face to control the gear shift with redstone.
+	minFloor = 1, --The higheast floor
+	maxFloor = 11, --The lowest floor
+	timeBetweenFloors = 0.4 --Time to move 1 floor (seconds).
 }
 
 Logger = require("logger")
@@ -19,6 +22,36 @@ ElevatorDirection = 0
 ---@return table EVData EV data.
 function getEVData()
 	return {currentFloor = CurrentFloor, direction = ElevatorDirection, minFloor = Config.minFloor, maxFloor = Config.maxFloor}
+end
+
+---Processing while the elevator is running.
+---@param targetFloor number The floor to go.
+function elevatorMove(targetFloor)
+	--Parallel functions
+	local function elevatorTiming()
+		while CurrentFloor ~= targetFloor do
+			sleep(Config.timeBetweenFloors)
+			CurrentFloor = CurrentFloor + ElevatorDirection
+			broadcast({floor = CurrentFloor, isArrived = (CurrentFloor == targetFloor)}, "EV_FLOOR")
+		end
+		Logger:info("Arried at floor "..CurrentFloor..".")
+		ElevatorDirection = 0
+		redstone.setOutput(Config.clutchFace, false)
+		redstone.setOutput(Config.gearShiftFace, false)
+	end
+
+	local function rednetStandby()
+		while true do
+			local event, sender, message, protocol = os.pullEvent("rednet_message")
+			if protocol == "EV_DATA_REQ" then
+				--Request to send EV data to the target floor computer.
+				Logger:info("Sending EV data to #"..sender..".")
+				rednet.send(sender, getEVData(), "EV_DATA_RES")
+			end
+		end
+	end
+
+	parallel.waitForAny(elevatorTiming, rednetStandby)
 end
 
 ---Broadcasts to floor computers.
@@ -42,13 +75,20 @@ while true do
 		rednet.send(sender, getEVData(), "EV_DATA_RES")
 	elseif protocol == "EV_CALL" then
 		--Call elevator to target floor.
-		Logger:info("The elevator called to floor "..message..".")
+		Logger:info("Called to floor "..message..".")
 		if message > CurrentFloor then
 			--Up
-			broadcast(1, "EV_DIRECTION")
+			ElevatorDirection = 1
+			broadcast(ElevatorDirection, "EV_DIRECTION")
+			redstone.setOutput(Config.clutchFace, true)
+			elevatorMove(message)
 		elseif message < CurrentFloor then
 			--Down
-			broadcast(-1, "EV_DIRECTION")
+			ElevatorDirection = -1
+			broadcast(ElevatorDirection, "EV_DIRECTION")
+			redstone.setOutput(Config.clutchFace, true)
+			redstone.setOutput(Config.gearShiftFace, true)
+			elevatorMove(message)
 		else
 			rednet.send(sender, {floor = message, isArrived = true}, "EV_FLOOR")
 		end
