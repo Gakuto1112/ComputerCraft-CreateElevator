@@ -15,6 +15,7 @@ function resetFloorInputScreen()
 	term.clear()
 	term.setCursorPos(1, 1)
 	if ElevatorDirection == 0 then
+		print("This is floor "..Config.floor..".")
 		print("Enter the floor which you want to go ("..FloorRange[1].."-"..FloorRange[2]..").")
 		write("> ")
 	else
@@ -58,7 +59,6 @@ function drawArrow()
 end
 
 --Setup
-Logger:info("This floor is "..Config.floor..".")
 Monitor = peripheral.find("monitor")
 Monitor.clear()
 Monitor.setTextScale(1.5)
