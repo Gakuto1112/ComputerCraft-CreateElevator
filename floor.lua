@@ -161,7 +161,7 @@ while true do
 				drawArrow()
 				resetFloorInputScreen()
 			elseif ParallelData[4] == "EV_FLOOR" then
-				drawFloorNumber((ParallelData[3] == FloorRange[2] and Config.roofFloor) and "R" or tostring(ParallelData[3].floor))
+				drawFloorNumber((ParallelData[3].floor == FloorRange[2] and Config.roofFloor) and "R" or tostring(ParallelData[3].floor))
 				if ParallelData[3].isArrived then
 					if ParallelData[3].floor == Config.floor then
 						redstone.setOutput(Config.doorFace, true)
