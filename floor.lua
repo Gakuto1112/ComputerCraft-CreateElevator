@@ -1,6 +1,7 @@
 --Program configurations
 Config = {
 	buttonFace = "back", --The face with elevator call button.
+	doorFace = "left", --The face to open and close door with redstone.
 	floor = 1 --The floor of this floor computer.
 }
 
@@ -66,6 +67,7 @@ Monitor.setCursorPos(3, 2)
 Monitor.write("?")
 peripheral.find("modem", rednet.open)
 rednet.host("EV_SYSTEM_FLOOR", "floor_"..Config.floor)
+Speaker = peripheral.find("speaker")
 
 --Search for master computerElevatorDirection
 MasterID = nil
@@ -89,6 +91,7 @@ while true do
 	local event, sender, message, protocol = os.pullEvent("rednet_message")
 	if protocol == "EV_DATA_RES" then
 		Logger:info("Got EV data from master.")
+		redstone.setOutput(Config.doorFace, message.currentFloor == Config.floor)
 		drawFloorNumber(tostring(message.currentFloor))
 		drawArrow()
 		FloorRange = {message.minFloor, message.maxFloor}
@@ -153,11 +156,16 @@ while true do
 		if ParallelData[1] == "rednet_message" then
 			if ParallelData[4] == "EV_DIRECTION" then
 				ElevatorDirection = ParallelData[3]
+				redstone.setOutput(Config.doorFace, false)
 				drawArrow()
 				resetFloorInputScreen()
 			elseif ParallelData[4] == "EV_FLOOR" then
 				drawFloorNumber(tostring(ParallelData[3].floor))
 				if ParallelData[3].isArrived then
+					if ParallelData[3].floor == Config.floor then
+						redstone.setOutput(Config.doorFace, true)
+						Speaker.playNote("bell", 1, 0.707107)
+					end
 					ElevatorDirection = 0
 					drawArrow()
 					resetFloorInputScreen()
