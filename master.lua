@@ -94,9 +94,6 @@ function broadcast(message, protocol)
 	if not FloorList then
 		FloorList = {rednet.lookup("EV_SYSTEM_FLOOR")}
 		table.sort(FloorList)
-		for _, elm in ipairs(FloorList) do
-			print(elm)
-		end
 	end
 	for _, floorComputer in ipairs(FloorList) do
 		rednet.send(floorComputer, message, protocol)
@@ -134,9 +131,6 @@ while true do
 		if FloorList and not tableFind(FloorList, sender) then
 			table.insert(FloorList, sender)
 			table.sort(FloorList)
-			for _, elm in ipairs(FloorList) do
-				print(elm)
-			end
 		end
 		rednet.send(sender, getEVData(), "EV_DATA_RES")
 	elseif protocol == "EV_CALL" then
