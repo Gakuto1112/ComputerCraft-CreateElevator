@@ -164,7 +164,7 @@ while true do
 				if ParallelData[3].isArrived then
 					if ParallelData[3].floor == Config.floor then
 						redstone.setOutput(Config.doorFace, true)
-						Speaker.playNote("bell", 1, 0.707107)
+						Speaker.playNote("bell", 1, 6)
 					end
 					ElevatorDirection = 0
 					drawArrow()
