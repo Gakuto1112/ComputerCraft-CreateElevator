@@ -11,10 +11,11 @@ Config = {
 	gearShiftFace = "right", --The face to control the gear shift with redstone.
 	minFloor = 1, --The higheast floor
 	maxFloor = 11, --The lowest floor
-	timeBetweenFloors = 0.4 --Time to move 1 floor (seconds).
+	timeBetweenFloors = 2.4 --Time to move 1 floor (seconds).
 }
 
 Logger = require("logger")
+FloorList = nil --List of floor computers.
 CurrentFloor = 1
 ElevatorDirection = 0
 
@@ -59,11 +60,45 @@ function elevatorMove(targetFloor)
 	parallel.waitForAny(elevatorTiming, rednetStandby)
 end
 
+---Checks whatever a target value is included in specified table (numbers only).
+---@param tableToFind table The table to find whatever the key is in it or not. It must be sorted.
+---@param keyValue number The key to find.
+---@return boolean keyFound Whatever the key is found in the table or not.
+function tableFind(tableToFind, keyValue)
+	if #tableToFind == 0 then
+		return false
+	end
+	local centerIndex = math.ceil(#tableToFind)
+	local centerValue = tableToFind[centerIndex]
+	if centerValue > keyValue then
+		local chunk = {}
+		for i = 1, centerIndex - 1 do
+			table.insert(chunk, tableToFind[i])
+		end
+		return tableFind(chunk, keyValue)
+	elseif centerValue < keyValue then
+		local chunk = {}
+		for i = centerIndex + 1, #tableToFind do
+			table.insert(chunk, tableToFind[i])
+		end
+		return tableFind(chunk, keyValue)
+	else
+		return centerValue == keyValue
+	end
+end
+
 ---Broadcasts to floor computers.
 ---@param message any The data to send.
 ---@param protocol ProtocolType The protocol of the sending message.
 function broadcast(message, protocol)
-	for _, floorComputer in ipairs({rednet.lookup("EV_SYSTEM_FLOOR")}) do
+	if not FloorList then
+		FloorList = {rednet.lookup("EV_SYSTEM_FLOOR")}
+		table.sort(FloorList)
+		for _, elm in ipairs(FloorList) do
+			print(elm)
+		end
+	end
+	for _, floorComputer in ipairs(FloorList) do
 		rednet.send(floorComputer, message, protocol)
 	end
 end
@@ -96,6 +131,13 @@ while true do
 	if protocol == "EV_DATA_REQ" then
 		--Request to send EV data to the target floor computer.
 		Logger:info("Sending EV data to #"..sender..".")
+		if FloorList and not tableFind(FloorList, sender) then
+			table.insert(FloorList, sender)
+			table.sort(FloorList)
+			for _, elm in ipairs(FloorList) do
+				print(elm)
+			end
+		end
 		rednet.send(sender, getEVData(), "EV_DATA_RES")
 	elseif protocol == "EV_CALL" then
 		--Call elevator to target floor.
