@@ -10,7 +10,7 @@ Config = {
 	clutchFace = "left", --The face to control the clutch with redstone.
 	gearShiftFace = "right", --The face to control the gear shift with redstone.
 	minFloor = 1, --The higheast floor
-	maxFloor = 11, --The lowest floor
+	maxFloor = 10, --The lowest floor
 	timeBetweenFloors = 2.4 --Time to move 1 floor (seconds).
 }
 

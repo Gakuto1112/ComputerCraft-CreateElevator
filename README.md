@@ -80,7 +80,7 @@
    | `clutchFace` | クラッチを制御する為にレッドストーン信号を出力するコンピューターの面 | `string`（`top`・`front`・`left`・`back`・`right`・`bottom`） | "left" |
    | `gearShiftFace` | ギアシフトを制御する為にレッドストーン信号を出力するコンピューターの面 | `string`（`top`・`front`・`left`・`back`・`right`・`bottom`） | "right" |
    | `minFloor` | このエレベーターシステムの最下階のフロア | `number` | 1 |
-   | `maxFloor` | このエレベーターシステムの最上階のフロア | `number` | 11 |
+   | `maxFloor` | このエレベーターシステムの最上階のフロア | `number` | 10 |
    | `timeBetweenFloors` | エレベーターが1階層分移動するのに要する時間（参考までに、ローププーリーが64RPMで6m移動するのに要する時間は2.4です、移動時間の測定には[こちら](#エレベーターの移動時間の測り方)を参考にして下さい。） | `number` | 2.4 |
 
 4. コンピューターを再起動します。
