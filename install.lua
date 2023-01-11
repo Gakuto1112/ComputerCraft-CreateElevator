@@ -26,6 +26,7 @@ Install = {
 	setup = function (self)
 		print("Install wizard of \""..self.SourseFile.."\"")
 		if fs.exists(shell.resolve(self.SourseFile)) then
+			local completion = require("cc.completion")
 			local answer = nil
 			for _, configQuestion in ipairs(self.ConfigList) do
 				print(configQuestion.desc)
@@ -35,35 +36,35 @@ Install = {
 					end
 
 					write("["..configQuestion.type.."]> ")
-					answer = read()
 					if configQuestion.type == "number" then
-						local answerNumber = tonumber(answer)
-						if answerNumber then
-							answer = answerNumber
+						answer = tonumber(read())
+						if answer then
 							break
 						else
 							invalidInput()
 						end
 					elseif configQuestion.type == "integer" then
-						local answerNumber = tonumber(answer)
-						if answerNumber and answerNumber % 1 == 0 then
-							answer = answerNumber
+						answer = tonumber(read())
+						if answer and answer % 1 == 0 then
 							break
 						else
 							invalidInput()
 						end
 					elseif configQuestion.type == "face" then
+						answer = read(nil, nil, completion.side)
 						if answer == "top" or answer == "front" or answer == "left" or answer == "back" or answer == "right" or answer == "bottom" then
 							break
 						else
 							invalidInput()
 						end
 					elseif configQuestion.type == "bool" then
-						local smallString = string.lower(answer)
-						if smallString == "y" or smallString == "yes" then
+						answer = string.lower(read(nil, nil, function (text)
+							return completion.choice(text, {"yes", "no"})
+						end))
+						if answer == "yes" then
 							answer = true
 							break
-						elseif smallString == "n" or smallString == "no" then
+						elseif answer == "no" then
 							answer = false
 							break
 						else
@@ -114,7 +115,9 @@ Install = {
 			while true do
 				print("Copy complete! Restart now?")
 				write("[bool]> ")
-				answer = string.lower(read())
+				answer = string.lower(read(nil, nil, function (text)
+					return completion.choice(text, {"yes", "no"})
+				end))
 				if answer == "y" or answer == "yes" then
 					os.reboot()
 				elseif answer == "n" or answer == "no" then
